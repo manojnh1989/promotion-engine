@@ -7,7 +7,7 @@ import javax.validation.constraints.NotNull;
 
 public interface PromotionService {
 
-    Integer evaluatePriceByApplyingGroupPromotions(@Valid @NotNull Cart cart);
+    Integer computePriceByApplyingGroupPromotions(@Valid @NotNull Cart cart);
 
-    Integer evaluatePriceByApplyingIndividualPromotions(@Valid @NotNull Cart cart);
+    Integer computePriceByApplyingIndividualPromotions(@Valid @NotNull Cart cart);
 }

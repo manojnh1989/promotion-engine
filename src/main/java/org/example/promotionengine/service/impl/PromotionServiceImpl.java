@@ -10,7 +10,11 @@ import org.example.promotionengine.repository.PromotionRepository;
 import org.example.promotionengine.service.PromotionService;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -21,7 +25,7 @@ public class PromotionServiceImpl implements PromotionService {
     private final PromotionRepository promotionRepository;
 
     @Override
-    public Integer evaluatePriceByApplyingGroupPromotions(final Cart cart) {
+    public Integer computePriceByApplyingGroupPromotions(final Cart cart) {
         final var groupPromotions = promotionRepository.findAllGroupPromotions();
         final var totalPrice = new AtomicInteger(0);
         groupPromotions.forEach(promotion -> applyGroupPromotion(promotion, cart, totalPrice));
@@ -29,7 +33,7 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
-    public Integer evaluatePriceByApplyingIndividualPromotions(final Cart cart) {
+    public Integer computePriceByApplyingIndividualPromotions(final Cart cart) {
         final var individualPromotionsBySkuId = promotionRepository.findAllIndividualPromotionsBySkuId();
         final var totalPrice = new AtomicInteger(0);
         individualPromotionsBySkuId.forEach((key, val) -> applyIndividualPromotions(key, val, cart, totalPrice));
@@ -50,18 +54,21 @@ public class PromotionServiceImpl implements PromotionService {
         final var unitGroups = evaluateAllUnitGroupsForMatchingTargetUnits(cart.getUnitsBySkuId(skuId),
                 promotionsByUnit.keySet());
         if (unitGroups.size() > 1) {
-            final var hashedUnitGroupIndex = UUID.randomUUID().hashCode() % (unitGroups.size() - 1);
-            log.info("applyIndividualPromotions hashedUnitGrp:{}", unitGroups.get(hashedUnitGroupIndex + 1));
-            System.out.println(unitGroups.get(hashedUnitGroupIndex + 1));
-            totalPrice.addAndGet(unitGroups.get(hashedUnitGroupIndex + 1).stream()
-                    .map(unit -> {
-                            if (!promotionsByUnit.containsKey(unit)) {
-                                return cart.getUnitsBySkuId(skuId);
-                            }
-                            return promotionsByUnit.get(unit).getPrice();
+            log.info("applyIndividualPromotions allUnitGroups:{}", unitGroups);
+            final var appliedUnitGroup = unitGroups.get(unitGroups.size() - 1);
+            log.info("applyIndividualPromotions appliedUnitGroup:{}", appliedUnitGroup);
+            totalPrice.addAndGet(appliedUnitGroup.stream().map(unit ->
+                    {
+                        if (!promotionsByUnit.containsKey(unit)) {
+                            return skuId.getUnitPrice();
+                        }
+                        return promotionsByUnit.get(unit).getPrice();
                     }).reduce(0, Integer::sum));
+        } else {
+            totalPrice.addAndGet(skuId.getUnitPrice() * unitGroups.get(0).size());
         }
-        totalPrice.addAndGet( skuId.getUnitPrice() * unitGroups.get(0).size() );
+        // Resetting the units as `0`
+        cart.getUnitsBySkuId().put(skuId, 0);
     }
 
     private static List<List<Integer>> evaluateAllUnitGroupsForMatchingTargetUnits(final Integer targetPrice,

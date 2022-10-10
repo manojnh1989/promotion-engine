@@ -19,10 +19,19 @@ public class CartServiceImpl implements CartService {
     @Override
     public Integer computeCartCheckoutPrice(final Cart cart) {
         // Compute Group Promotions
-        final var grpPromotionsComputedPrice = promotionService.evaluatePriceByApplyingGroupPromotions(cart);
+        final var grpPromotionsComputedPrice = promotionService.computePriceByApplyingGroupPromotions(cart);
         log.debug("computeCartCheckoutPrice groupPromotionsComputedPrice:{}", grpPromotionsComputedPrice);
-        final var individualPromotionsComputedPrice = promotionService.evaluatePriceByApplyingIndividualPromotions(cart);
+        // Compute Individual Promotions
+        final var individualPromotionsComputedPrice = promotionService.computePriceByApplyingIndividualPromotions(cart);
         log.debug("computeCartCheckoutPrice individualPromotionsComputedPrice:{}", individualPromotionsComputedPrice);
-        return grpPromotionsComputedPrice + individualPromotionsComputedPrice;
+        // Compute Remaining Units
+        final var remainingUnitsComputedPrice = computePriceForRemainingUnitsUsingUnitPrices(cart);
+        log.debug("computeCartCheckoutPrice remainingUnitsComputedPrice:{}", remainingUnitsComputedPrice);
+        return grpPromotionsComputedPrice + individualPromotionsComputedPrice + remainingUnitsComputedPrice;
+    }
+
+    private static Integer computePriceForRemainingUnitsUsingUnitPrices(final Cart cart) {
+        return cart.getUnitsBySkuId().entrySet().stream().filter(e -> e.getValue() > 0)
+                .map(e -> e.getKey().getUnitPrice() * e.getValue()).reduce(0, Integer::sum);
     }
 }

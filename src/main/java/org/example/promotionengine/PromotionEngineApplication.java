@@ -24,13 +24,14 @@ public class PromotionEngineApplication {
     @Bean
     public CommandLineRunner lineRunner() {
         return (args) -> {
-            cartService.computeCartCheckoutPrice(Cart.builder().unitsBySkuId(
+            System.out.println(cartService.computeCartCheckoutPrice(Cart.builder().unitsBySkuId(
                     Map.of(
-                            SkuId.A, 1,
-                            SkuId.B, 1,
-                            SkuId.C, 1
+                            SkuId.A, 3,
+                            SkuId.B, 5,
+                            SkuId.C, 1,
+                            SkuId.D, 1
                     )
-            ).build());
+            ).build()));
         };
     }
 }
