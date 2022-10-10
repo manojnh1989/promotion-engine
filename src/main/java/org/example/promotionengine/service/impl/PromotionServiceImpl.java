@@ -9,6 +9,8 @@ import org.example.promotionengine.dto.SkuId;
 import org.example.promotionengine.repository.PromotionRepository;
 import org.example.promotionengine.service.PromotionService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -17,9 +19,10 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Slf4j
 @Service
 @AllArgsConstructor
-@Slf4j
+@Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
 public class PromotionServiceImpl implements PromotionService {
 
     private final PromotionRepository promotionRepository;
@@ -54,9 +57,9 @@ public class PromotionServiceImpl implements PromotionService {
         final var unitGroups = evaluateAllUnitGroupsForMatchingTargetUnits(cart.getUnitsBySkuId(skuId),
                 promotionsByUnit.keySet());
         if (unitGroups.size() > 1) {
-            log.info("applyIndividualPromotions allUnitGroups:{}", unitGroups);
+            log.debug("applyIndividualPromotions allUnitGroups:{}", unitGroups);
             final var appliedUnitGroup = unitGroups.get(unitGroups.size() - 1);
-            log.info("applyIndividualPromotions appliedUnitGroup:{}", appliedUnitGroup);
+            log.debug("applyIndividualPromotions appliedUnitGroup:{}", appliedUnitGroup);
             totalPrice.addAndGet(appliedUnitGroup.stream().map(unit ->
                     {
                         if (!promotionsByUnit.containsKey(unit)) {
@@ -71,36 +74,38 @@ public class PromotionServiceImpl implements PromotionService {
         cart.getUnitsBySkuId().put(skuId, 0);
     }
 
-    private static List<List<Integer>> evaluateAllUnitGroupsForMatchingTargetUnits(final Integer targetPrice,
-                                                                                   final Collection<Integer> promotionPrices) {
+    private static List<List<Integer>> evaluateAllUnitGroupsForMatchingTargetUnits(final Integer targetUnits,
+                                                                                   final Collection<Integer> promotionUnits) {
 
         final List<List<Integer>> unitGroups = new ArrayList<>();
-        final var promotionPricesCopy = new ArrayList<>(promotionPrices);
-        promotionPricesCopy.add(1);
-        Collections.sort(promotionPricesCopy);
-        evaluateAllUnitGroupsInRecursionToMatchTarget(unitGroups, targetPrice, new ArrayList<>(), promotionPricesCopy, 0);
+        final var promotionUnitsCopy = new ArrayList<>(promotionUnits);
+        // Adding the unit `1` to evaluate cases where 1 has be added to reach target...
+        // For ex : In case of [A of 3] to reach 5, the group [1, 1, 3] will be needed.
+        promotionUnitsCopy.add(1);
+        Collections.sort(promotionUnitsCopy);
+        evaluateAllUnitGroupsInRecursionToMatchTarget(unitGroups, targetUnits, new ArrayList<>(), promotionUnitsCopy, 0);
         return unitGroups;
     }
 
-    private static void evaluateAllUnitGroupsInRecursionToMatchTarget(final List<List<Integer>> unitGroups, final Integer targetPrice,
-                                                                      final List<Integer> tempPrices, final List<Integer> promotionPrices,
+    private static void evaluateAllUnitGroupsInRecursionToMatchTarget(final List<List<Integer>> unitGroups, final Integer targetUnits,
+                                                                      final List<Integer> tempUnits, final List<Integer> promotionUnits,
                                                                       int counter) {
-        if (counter == promotionPrices.size()) {
+        if (counter == promotionUnits.size()) {
             return;
         }
 
-        if (targetPrice == 0) {
-            unitGroups.add(new ArrayList<>(tempPrices));
+        if (targetUnits == 0) {
+            unitGroups.add(new ArrayList<>(tempUnits));
             return;
         }
 
-        if (targetPrice >= promotionPrices.get(counter)) {
-            tempPrices.add(promotionPrices.get(counter));
-            evaluateAllUnitGroupsInRecursionToMatchTarget(unitGroups, targetPrice - promotionPrices.get(counter),
-                    tempPrices, promotionPrices, counter);
-            tempPrices.remove(tempPrices.size() - 1);
+        if (targetUnits >= promotionUnits.get(counter)) {
+            tempUnits.add(promotionUnits.get(counter));
+            evaluateAllUnitGroupsInRecursionToMatchTarget(unitGroups, targetUnits - promotionUnits.get(counter),
+                    tempUnits, promotionUnits, counter);
+            tempUnits.remove(tempUnits.size() - 1);
         }
-        evaluateAllUnitGroupsInRecursionToMatchTarget(unitGroups, targetPrice, tempPrices, promotionPrices, ++counter);
+        evaluateAllUnitGroupsInRecursionToMatchTarget(unitGroups, targetUnits, tempUnits, promotionUnits, ++counter);
     }
 
     private static Pair<Boolean, Integer> validateIfGroupPromotionApplicableAndReturnCount(final Promotion promotion, final Cart cart) {
