@@ -22,4 +22,9 @@ public interface RemotePromotionRepository extends JpaRepository<Promotion, UUID
     default List<Promotion> findAllPromotions() {
         return findAllPromotionsAndPromotionSkuDetails();
     }
+
+    @Override
+    default Promotion savePromotion(final Promotion promotion) {
+        return save(promotion);
+    }
 }

@@ -11,12 +11,12 @@ import java.util.Map;
 @Getter
 @Builder
 @NoArgsConstructor
-public class Cart {
+public class CartInformation {
 
     @NotEmpty
     private Map<SkuId, Integer> unitsBySkuId;
 
-    public Cart(final Map<SkuId, Integer> unitsBySkuId) {
+    public CartInformation(final Map<SkuId, Integer> unitsBySkuId) {
         this.unitsBySkuId = new HashMap<>(unitsBySkuId);
     }
 

@@ -14,6 +14,8 @@ public interface PromotionRepository {
 
     List<Promotion> findAllPromotions();
 
+    Promotion savePromotion(Promotion promotion);
+
     @Valid
     default List<Promotion> findAllGroupPromotions() {
         return findAllPromotions().stream().filter(Promotion::isGroupPromotion).collect(Collectors.toList());

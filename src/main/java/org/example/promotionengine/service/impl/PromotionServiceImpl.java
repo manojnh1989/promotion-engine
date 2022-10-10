@@ -4,12 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.example.promotionengine.domain.Promotion;
-import org.example.promotionengine.dto.Cart;
+import org.example.promotionengine.dto.CartInformation;
+import org.example.promotionengine.dto.PromotionCreateRequest;
+import org.example.promotionengine.dto.PromotionInformation;
 import org.example.promotionengine.dto.SkuId;
 import org.example.promotionengine.repository.PromotionRepository;
 import org.example.promotionengine.service.PromotionService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -17,18 +18,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
 @AllArgsConstructor
-@Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+@Transactional(readOnly = true)
 public class PromotionServiceImpl implements PromotionService {
 
     private final PromotionRepository promotionRepository;
 
     @Override
-    public Integer computePriceByApplyingGroupPromotions(final Cart cart) {
+    public Integer computePriceByApplyingGroupPromotions(final CartInformation cart) {
         final var groupPromotions = promotionRepository.findAllGroupPromotions();
         final var totalPrice = new AtomicInteger(0);
         groupPromotions.forEach(promotion -> applyGroupPromotion(promotion, cart, totalPrice));
@@ -36,14 +38,20 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
-    public Integer computePriceByApplyingIndividualPromotions(final Cart cart) {
+    public Integer computePriceByApplyingIndividualPromotions(final CartInformation cart) {
         final var individualPromotionsBySkuId = promotionRepository.findAllIndividualPromotionsBySkuId();
         final var totalPrice = new AtomicInteger(0);
         individualPromotionsBySkuId.forEach((key, val) -> applyIndividualPromotions(key, val, cart, totalPrice));
         return totalPrice.get();
     }
 
-    private static void applyGroupPromotion(final Promotion promotion, final Cart cart, final AtomicInteger totalPrice) {
+    @Override
+    @Transactional
+    public PromotionInformation addPromotion(final PromotionCreateRequest promotionCreateRequest) {
+        return buildPromotionInformation(promotionRepository.savePromotion(buildPromotion(promotionCreateRequest)));
+    }
+
+    private static void applyGroupPromotion(final Promotion promotion, final CartInformation cart, final AtomicInteger totalPrice) {
         final var minCountByValidFlag = validateIfGroupPromotionApplicableAndReturnCount(promotion, cart);
         if(!minCountByValidFlag.getKey()) {
             return;
@@ -53,7 +61,7 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     private static void applyIndividualPromotions(final SkuId skuId, final Map<Integer, Promotion> promotionsByUnit,
-                                                  final Cart cart, final AtomicInteger totalPrice) {
+                                                  final CartInformation cart, final AtomicInteger totalPrice) {
         final var unitGroups = evaluateAllUnitGroupsForMatchingTargetUnits(cart.getUnitsBySkuId(skuId),
                 promotionsByUnit.keySet());
         if (unitGroups.size() > 1) {
@@ -72,6 +80,22 @@ public class PromotionServiceImpl implements PromotionService {
         }
         // Resetting the units as `0`
         cart.getUnitsBySkuId().put(skuId, 0);
+    }
+
+    private static Promotion buildPromotion(final PromotionCreateRequest request) {
+        final var promotionBuilder = Promotion.builder().unitsBySkuId(request.getUnitsBySkuId());
+        if (Objects.nonNull(request.getPrice())) {
+            return promotionBuilder.price(request.getPrice()).build();
+        }
+        Objects.requireNonNull(request.getUnitPricePercentage());
+        return promotionBuilder.price(request.getUnitsBySkuId().entrySet().stream()
+                        .map(entry -> entry.getKey().getUnitPrice() * ( request.getUnitPricePercentage() / 100 ) * entry.getValue())
+                        .reduce(0, Integer::sum)).build();
+    }
+
+    private static PromotionInformation buildPromotionInformation(final Promotion promotion) {
+        return PromotionInformation.builder().price(promotion.getPrice()).id(promotion.getId()).unitsBySkuId(promotion.getUnitsBySkuId())
+                .build();
     }
 
     private static List<List<Integer>> evaluateAllUnitGroupsForMatchingTargetUnits(final Integer targetUnits,
@@ -108,7 +132,7 @@ public class PromotionServiceImpl implements PromotionService {
         evaluateAllUnitGroupsInRecursionToMatchTarget(unitGroups, targetUnits, tempUnits, promotionUnits, ++counter);
     }
 
-    private static Pair<Boolean, Integer> validateIfGroupPromotionApplicableAndReturnCount(final Promotion promotion, final Cart cart) {
+    private static Pair<Boolean, Integer> validateIfGroupPromotionApplicableAndReturnCount(final Promotion promotion, final CartInformation cart) {
         boolean isValid = true;
         int minCount = Integer.MAX_VALUE;
         for (Map.Entry<SkuId, Integer> entry : promotion.getUnitsBySkuId().entrySet()) {

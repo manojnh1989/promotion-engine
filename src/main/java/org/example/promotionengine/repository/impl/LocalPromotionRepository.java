@@ -32,4 +32,10 @@ public class LocalPromotionRepository implements PromotionRepository {
     public List<Promotion> findAllPromotions() {
         return this.promotions;
     }
+
+    @Override
+    public Promotion savePromotion(final Promotion promotion) {
+        this.promotions.add(promotion);
+        return promotion;
+    }
 }

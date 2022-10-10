@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.example.promotionengine.domain.Promotion;
-import org.example.promotionengine.dto.Cart;
+import org.example.promotionengine.dto.CartInformation;
 import org.example.promotionengine.dto.SkuId;
 import org.example.promotionengine.repository.RemotePromotionRepository;
 import org.example.promotionengine.service.CartService;
@@ -33,7 +33,7 @@ public class PromotionEngineRunnerConfiguration {
     public CommandLineRunner commandLineRunnerLocal() {
         return (args) -> {
             log.info("computingCartCheckoutPrice profile:{} and price:{}", LOCAL_PROFILE,
-                    cartService.computeCartCheckoutPrice(Cart.builder().unitsBySkuId(TEST_UNITS_BY_SKU_ID).build()));
+                    cartService.computeCartCheckoutPrice(CartInformation.builder().unitsBySkuId(TEST_UNITS_BY_SKU_ID).build()));
         };
     }
 
@@ -51,7 +51,7 @@ public class PromotionEngineRunnerConfiguration {
             }
 
             log.info("computingCartCheckoutPrice profile:{} and price:{}", REMOTE_PROFILE,
-                    cartService.computeCartCheckoutPrice(Cart.builder().unitsBySkuId(TEST_UNITS_BY_SKU_ID).build()));
+                    cartService.computeCartCheckoutPrice(CartInformation.builder().unitsBySkuId(TEST_UNITS_BY_SKU_ID).build()));
         };
     }
 }
