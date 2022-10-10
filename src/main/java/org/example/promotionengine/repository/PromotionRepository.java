@@ -1,7 +1,10 @@
 package org.example.promotionengine.repository;
 
-import org.springframework.stereotype.Repository;
+import org.example.promotionengine.domain.Promotion;
 
-@Repository
+import java.util.List;
+
 public interface PromotionRepository {
+
+    List<Promotion> findAllGroupPromotions();
 }
