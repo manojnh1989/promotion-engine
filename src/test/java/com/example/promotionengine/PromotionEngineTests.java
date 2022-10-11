@@ -1,14 +1,24 @@
 package com.example.promotionengine;
 
-import org.example.promotionengine.PromotionEngineApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(classes = PromotionEngineApplication.class)
 class PromotionEngineTests {
 
-	@Test
-	void contextLoads() {
+	@ActiveProfiles({"test-run", "local"})
+	@SpringBootTest(classes = PromotionEngineApplication.class)
+	static class LocalContextLoadTest {
+		@Test
+		void contextLoads() {
+		}
 	}
 
+	@ActiveProfiles({"test-run", "remote"})
+	@SpringBootTest(classes = PromotionEngineApplication.class)
+	static class RemoteContextLoadTest {
+		@Test
+		void contextLoads() {
+		}
+	}
 }

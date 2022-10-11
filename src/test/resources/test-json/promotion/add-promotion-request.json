@@ -1,0 +1,21 @@
+[
+  {
+    "price" : 130,
+    "unitsBySkuId" : {
+        "A" : 3
+    }
+  },
+  {
+    "price" : 45,
+    "unitsBySkuId" : {
+      "B" : 2
+    }
+  },
+  {
+    "price" : 30,
+    "unitsBySkuId" : {
+      "C" : 1,
+      "D" : 1
+    }
+  }
+]
