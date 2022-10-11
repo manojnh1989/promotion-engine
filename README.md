@@ -35,6 +35,8 @@ remote databases if required.
 
 ### How to run ??
 
-* Checkout the code.
+* Checkout the code using command `git clone -b master https://github.com/manojnh1989/promotion-engine.git`
+* Switch to code directory `cd promotion-engine`
 * Run `mvn clean install`.
 * Run `mvn spring-boot:run`.
+* Open link [Swagger](http://localhost:8080/promotion-engine/swagger-ui.html#!)
