@@ -14,7 +14,7 @@ import java.util.UUID;
 @Repository
 public interface RemotePromotionRepository extends JpaRepository<Promotion, UUID>, PromotionRepository {
 
-    @Query(value = "SELECT p FROM Promotion p JOIN FETCH p.promotionSkuDetails")
+    @Query(value = "SELECT DISTINCT p FROM Promotion p JOIN FETCH p.promotionSkuDetails")
     List<Promotion> findAllPromotionsAndPromotionSkuDetails();
 
     @Override

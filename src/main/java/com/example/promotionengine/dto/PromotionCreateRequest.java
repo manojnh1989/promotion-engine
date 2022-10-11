@@ -1,5 +1,6 @@
 package com.example.promotionengine.dto;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,6 +22,11 @@ public class PromotionCreateRequest {
     @Nullable
     private Integer unitPricePercentage;
 
+    @ApiModelProperty(
+            value = "Units by SkuId Map",
+            example = "{ \"A\": 1, \"B\": 2 }",
+            dataType = "Map[String,Integer]"
+    )
     @NotEmpty
     private Map<SkuId, Integer> unitsBySkuId;
 

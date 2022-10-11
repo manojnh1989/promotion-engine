@@ -5,6 +5,8 @@ import com.example.promotionengine.dto.PromotionCreateRequest;
 import com.example.promotionengine.dto.PromotionInformation;
 import com.example.promotionengine.dto.SkuId;
 import com.example.promotionengine.service.PromotionService;
+import com.example.promotionengine.utility.PromotionEngineTestUtility;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -12,10 +14,12 @@ import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.example.promotionengine.utility.PromotionEngineTestUtility.getMapper;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RemoteIntegrationTest
@@ -37,11 +41,11 @@ public class PromotionIntegrationTestIT extends AbstractBaseTestIntegration {
             addPromotionAndAssert(PromotionCreateRequest.builder().price(price).unitsBySkuId(unitsBySkuId).build());
             Mockito.reset(promotionService);
         }
+        final String PROMOTIONS_URL = "/v1/promotion";
         {
             final int pricePercentage = 50;
             final var unitsBySkuId = Map.of(SkuId.A, 1);
-
-            final String PROMOTIONS_URL = "/v1/promotion";
+            
             final var result = mockMvc.perform(post(PROMOTIONS_URL)
                             .content(buildContent(PromotionCreateRequest.builder().unitPricePercentage(pricePercentage)
                                     .unitsBySkuId(unitsBySkuId).build()))
@@ -56,8 +60,21 @@ public class PromotionIntegrationTestIT extends AbstractBaseTestIntegration {
                     PromotionInformation.class);
             Assertions.assertEquals((int) (SkuId.A.getUnitPrice() * ( pricePercentage / (double) 100 )), promotionInformation.getPrice());
         }
+        {
+            final var result = mockMvc.perform(get(PROMOTIONS_URL))
+                    .andExpect(status().is2xxSuccessful())
+                    .andReturn();
+
+            Assertions.assertNotNull(result);
+            Assertions.assertNotNull(result.getResponse());
+            Assertions.assertNotNull(result.getResponse().getContentAsString());
+            final var promotionInformation = getMapper().readValue(result.getResponse().getContentAsString(),
+                    new TypeReference<List<PromotionInformation>>() {
+                    });
+            PromotionEngineTestUtility.assertValueObject("test-json/promotion/get-promotions-response.json",
+                    promotionInformation);
+        }
         // Failure ...
-        final String PROMOTIONS_URL = "/v1/promotion";
         {
             mockMvc.perform(post(PROMOTIONS_URL)
                             .content(buildContent(PromotionCreateRequest.builder().build()))

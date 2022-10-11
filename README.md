@@ -32,3 +32,9 @@ Promotion Engine can occupy multiple promotions and each promotion can be of eit
 * Added support for both `local` (in-memory) and `remote` (h2 database) and can be easily plugged in with other 
 remote databases if required.
 * Profiles are maintained for `local` and `remote` connections.
+
+### How to run ??
+
+* Checkout the code.
+* Run `mvn clean install`.
+* Run `mvn spring-boot:run`.

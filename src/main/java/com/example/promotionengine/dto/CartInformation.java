@@ -1,5 +1,6 @@
 package com.example.promotionengine.dto;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,11 @@ import java.util.Map;
 public class CartInformation {
 
     @NotEmpty
+    @ApiModelProperty(
+            value = "Units by SkuId Map",
+            example = "{ \"A\": 1, \"B\": 2 }",
+            dataType = "Map[String,Integer]"
+    )
     private Map<SkuId, Integer> unitsBySkuId;
 
     public CartInformation(final Map<SkuId, Integer> unitsBySkuId) {

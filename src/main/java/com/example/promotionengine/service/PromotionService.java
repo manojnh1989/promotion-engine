@@ -6,6 +6,7 @@ import com.example.promotionengine.dto.PromotionInformation;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 public interface PromotionService {
 
@@ -14,4 +15,6 @@ public interface PromotionService {
     Integer computePriceByApplyingIndividualPromotions(@Valid @NotNull CartInformation cart);
 
     PromotionInformation addPromotion(PromotionCreateRequest promotionCreateRequest);
+    
+    List<PromotionInformation> getAllPromotions();
 }

@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -52,6 +53,12 @@ public class PromotionServiceImpl implements PromotionService {
         final var promotion = buildPromotion(promotionCreateRequest);
         promotion.addPromotionSkuDetail(promotionCreateRequest.getUnitsBySkuId());
         return buildPromotionInformation(promotionRepository.savePromotion(promotion));
+    }
+
+    @Override
+    public List<PromotionInformation> getAllPromotions() {
+        return promotionRepository.findAllPromotions().stream().map(PromotionServiceImpl::buildPromotionInformation)
+                .collect(Collectors.toList());
     }
 
     private static void applyGroupPromotion(final Promotion promotion, final CartInformation cart, final AtomicInteger totalPrice) {
