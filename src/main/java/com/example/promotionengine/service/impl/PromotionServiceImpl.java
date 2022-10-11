@@ -91,7 +91,9 @@ public class PromotionServiceImpl implements PromotionService {
         }
         Objects.requireNonNull(request.getUnitPricePercentage());
         return promotionBuilder.price(request.getUnitsBySkuId().entrySet().stream()
-                        .map(entry -> entry.getKey().getUnitPrice() * ( request.getUnitPricePercentage() / 100 ) * entry.getValue())
+                        .map(entry ->
+                                ((int) (entry.getKey().getUnitPrice() * ( request.getUnitPricePercentage() / (double) 100 )))
+                                        * entry.getValue())
                         .reduce(0, Integer::sum)).build();
     }
 
