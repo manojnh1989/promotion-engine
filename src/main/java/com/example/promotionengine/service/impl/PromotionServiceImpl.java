@@ -12,6 +12,7 @@ import com.example.promotionengine.repository.PromotionRepository;
 import com.example.promotionengine.service.PromotionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -66,6 +67,10 @@ public class PromotionServiceImpl implements PromotionService {
                                                   final CartInformation cart, final AtomicInteger totalPrice) {
         final var unitGroups = evaluateAllUnitGroupsForMatchingTargetUnits(cart.getUnitsBySkuId(skuId),
                 promotionsByUnit.keySet());
+        // Validate if unit groups is empty
+        if (CollectionUtils.isEmpty(unitGroups)) {
+            throw new RuntimeException("Failed in applying individual promotions as `unitGroups` is empty / null");
+        }
         if (unitGroups.size() > 1) {
             log.debug("applyIndividualPromotions allUnitGroups:{}", unitGroups);
             final var appliedUnitGroup = unitGroups.get(unitGroups.size() - 1);
@@ -80,12 +85,12 @@ public class PromotionServiceImpl implements PromotionService {
         } else {
             totalPrice.addAndGet(skuId.getUnitPrice() * unitGroups.get(0).size());
         }
-        // Resetting the units as `0`
+        // Resetting the units as `0` as they would be already computed in previous step.
         cart.getUnitsBySkuId().put(skuId, 0);
     }
 
     private static Promotion buildPromotion(final PromotionCreateRequest request) {
-        final var promotionBuilder = Promotion.builder();
+        final var promotionBuilder = Promotion.builder().unitsBySkuId(request.getUnitsBySkuId());
         if (Objects.nonNull(request.getPrice())) {
             return promotionBuilder.price(request.getPrice()).build();
         }

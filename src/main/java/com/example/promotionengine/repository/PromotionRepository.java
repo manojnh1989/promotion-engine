@@ -14,7 +14,7 @@ public interface PromotionRepository {
 
     List<Promotion> findAllPromotions();
 
-    Promotion savePromotion(Promotion promotion);
+    Promotion savePromotion(@Valid Promotion promotion);
 
     @Valid
     default List<Promotion> findAllGroupPromotions() {
