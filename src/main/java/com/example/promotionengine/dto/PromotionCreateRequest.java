@@ -16,9 +16,20 @@ import java.util.Objects;
 @AllArgsConstructor
 public class PromotionCreateRequest {
 
+    @ApiModelProperty(
+            value = "Promotion Price",
+            example = "20",
+            dataType = "Integer"
+    )
     @Nullable
     private Integer price;
 
+    @ApiModelProperty(
+            value = "Unit Price Percentage",
+            example = "50",
+            dataType = "Integer",
+            notes = "Value should be between [1, 100]"
+    )
     @Nullable
     private Integer unitPricePercentage;
 

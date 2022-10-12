@@ -66,6 +66,7 @@ public class PromotionServiceImpl implements PromotionService {
         if(!minCountByValidFlag.getKey()) {
             return;
         }
+        log.debug("appliedGroupPromotion:{} for times:{}", promotion.getUnitsBySkuId(), minCountByValidFlag.getValue());
         totalPrice.addAndGet(promotion.getPrice() * minCountByValidFlag.getValue());
         cart.removeUnitsByCount(promotion.getUnitsBySkuId(), minCountByValidFlag.getValue());
     }
@@ -79,9 +80,9 @@ public class PromotionServiceImpl implements PromotionService {
             throw new RuntimeException("Failed in applying individual promotions as `unitGroups` is empty / null");
         }
         if (unitGroups.size() > 1) {
-            log.debug("applyIndividualPromotions allUnitGroups:{}", unitGroups);
+            log.debug("applyIndividualPromotions allUnitGroups:{} for SkuId:{}", unitGroups, skuId);
             final var appliedUnitGroup = unitGroups.get(unitGroups.size() - 1);
-            log.debug("applyIndividualPromotions appliedUnitGroup:{}", appliedUnitGroup);
+            log.debug("applyIndividualPromotions appliedUnitGroup:{} for SkuId:{}", appliedUnitGroup, skuId);
             totalPrice.addAndGet(appliedUnitGroup.stream().map(unit ->
                     {
                         if (!promotionsByUnit.containsKey(unit)) {
@@ -90,6 +91,8 @@ public class PromotionServiceImpl implements PromotionService {
                         return promotionsByUnit.get(unit).getPrice();
                     }).reduce(0, Integer::sum));
         } else {
+            log.debug("applyIndividualPromotions denied, calculating through unit price for SkuId:{} and units:{}", skuId,
+                    cart.getUnitsBySkuId(skuId));
             totalPrice.addAndGet(skuId.getUnitPrice() * unitGroups.get(0).size());
         }
         // Resetting the units as `0` as they would be already computed in previous step.
